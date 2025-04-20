@@ -187,3 +187,52 @@
         )
     )
 )
+
+;; Claim outstanding dividends for a specific asset
+(define-public (claim-dividends (asset-id uint))
+    (let
+        (
+            (asset (unwrap! (get-asset-info asset-id) err-not-found))
+            (balance (get-balance tx-sender asset-id))
+            (last-claim (get-last-claim asset-id tx-sender))
+            (total-dividends (get total-dividends asset))
+            (claimable-amount (/ (* balance (- total-dividends last-claim)) tokens-per-asset))
+        )
+        (asserts! (> claimable-amount u0) err-invalid-amount)
+        (ok (map-set dividend-claims
+            { asset-id: asset-id, claimer: tx-sender }
+            { last-claimed-amount: total-dividends }
+        ))
+    )
+)
+
+;; Create a new governance proposal for an asset
+(define-public (create-proposal 
+    (asset-id uint)
+    (title (string-ascii 256))
+    (duration uint)
+    (minimum-votes uint))
+    (begin
+        (asserts! (validate-duration duration) err-invalid-duration)
+        (asserts! (validate-minimum-votes minimum-votes) err-invalid-votes)
+        (asserts! (validate-metadata-uri title) err-invalid-title)
+        (asserts! (>= (get-balance tx-sender asset-id) (/ tokens-per-asset u10)) err-not-authorized)
+
+        (let
+            ((proposal-id (get-next-proposal-id)))
+            (ok (map-set proposals
+                { proposal-id: proposal-id }
+                {
+                    title: title,
+                    asset-id: asset-id,
+                    start-height: stacks-block-height,
+                    end-height: (+ stacks-block-height duration),
+                    executed: false,
+                    votes-for: u0,
+                    votes-against: u0,
+                    minimum-votes: minimum-votes
+                }
+            ))
+        )
+    )
+)
