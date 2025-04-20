@@ -75,3 +75,49 @@
         expiry: uint 
     }
 )
+
+(define-map proposals
+    { proposal-id: uint }
+    {
+        title: (string-ascii 256),
+        asset-id: uint,
+        start-height: uint,
+        end-height: uint,
+        executed: bool,
+        votes-for: uint,
+        votes-against: uint,
+        minimum-votes: uint
+    }
+)
+
+(define-map votes
+    { proposal-id: uint, voter: principal }
+    { vote-amount: uint }
+)
+
+(define-map dividend-claims
+    { asset-id: uint, claimer: principal }
+    { last-claimed-amount: uint }
+)
+
+(define-map price-feeds
+    { asset-id: uint }
+    {
+        price: uint,
+        decimals: uint,
+        last-updated: uint,
+        oracle: principal
+    }
+)
+
+;; SFTs per asset - defines the total supply for each tokenized asset
+(define-constant tokens-per-asset u100000)
+
+;; Validation Functions
+
+(define-private (validate-asset-value (value uint))
+    (and 
+        (>= value MIN-ASSET-VALUE)
+        (<= value MAX-ASSET-VALUE)
+    )
+)
