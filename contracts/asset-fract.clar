@@ -121,3 +121,69 @@
         (<= value MAX-ASSET-VALUE)
     )
 )
+
+(define-private (validate-duration (duration uint))
+    (and 
+        (>= duration MIN-DURATION)
+        (<= duration MAX-DURATION)
+    )
+)
+
+(define-private (validate-kyc-level (level uint))
+    (<= level MAX-KYC-LEVEL)
+)
+
+(define-private (validate-expiry (expiry uint))
+    (and 
+        (> expiry stacks-block-height)
+        (<= (- expiry stacks-block-height) MAX-EXPIRY)
+    )
+)
+
+(define-private (validate-minimum-votes (vote-count uint))
+    (and 
+        (> vote-count u0)
+        (<= vote-count tokens-per-asset)
+    )
+)
+
+(define-private (validate-metadata-uri (uri (string-ascii 256)))
+    (and 
+        (> (len uri) u0)
+        (<= (len uri) u256)
+    )
+)
+
+;; Public Functions
+
+;; Register a new asset for tokenization
+(define-public (register-asset 
+    (metadata-uri (string-ascii 256)) 
+    (asset-value uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (validate-metadata-uri metadata-uri) err-invalid-uri)
+        (asserts! (validate-asset-value asset-value) err-invalid-value)
+
+        (let 
+            ((asset-id (get-next-asset-id)))
+            (map-set assets
+                { asset-id: asset-id }
+                {
+                    owner: contract-owner,
+                    metadata-uri: metadata-uri,
+                    asset-value: asset-value,
+                    is-locked: false,
+                    creation-height: stacks-block-height,
+                    last-price-update: stacks-block-height,
+                    total-dividends: u0
+                }
+            )
+            (map-set token-balances
+                { owner: contract-owner, asset-id: asset-id }
+                { balance: tokens-per-asset }
+            )
+            (ok asset-id)
+        )
+    )
+)
