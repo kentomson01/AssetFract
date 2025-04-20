@@ -319,3 +319,29 @@
         )
     )
 )
+
+;; Private Helper Functions
+
+;; Get the next available asset ID
+(define-private (get-next-asset-id)
+    (default-to u1
+        (get-last-asset-id)
+    )
+)
+
+;; Get the next available proposal ID
+(define-private (get-next-proposal-id)
+    (default-to u1
+        (get-last-proposal-id)
+    )
+)
+
+;; Get the last registered asset ID (to be implemented)
+(define-private (get-last-asset-id)
+    none
+)
+
+;; Get the last created proposal ID (to be implemented)
+(define-private (get-last-proposal-id)
+    none
+)
